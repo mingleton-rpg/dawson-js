@@ -1,7 +1,13 @@
 {
     "bot" : {
         "discordAPIKey" : "OTYxOTYyNjk3NzAyOTAzODU4.YlAnkw.Uw7z8Lp7-mCBPCGR6ZvKDOngOTs",
-        "guildID" : "618748256028983326"
+        "guildID" : "618748256028983326",
+        "roleID": "962205339728633876"
+    },
+    "airdrop" : {
+        "channelID" : "962205038883786772",
+        "intervalMs" : 60000,
+        "expirationMs" : 3600000
     },
     "postgres" : {
         "user" : "wqdpdoiemmwwuu",

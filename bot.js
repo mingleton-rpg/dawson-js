@@ -3,7 +3,12 @@
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { Client, Intents } = require('discord.js');
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MEMBERS] });
+const client = new Client({ intents: [
+    Intents.FLAGS.GUILDS, 
+    Intents.FLAGS.GUILD_VOICE_STATES, 
+    Intents.FLAGS.GUILD_MEMBERS,
+    Intents.FLAGS.GUILD_PRESENCES
+] });
 
 /** Moment.JS */
 const moment = require('moment-timezone');
@@ -72,6 +77,10 @@ const commands = [
                 ]
             }
         ]
+    },
+    {
+        name: 'inventory', 
+        description: 'Check the items in your inventory'
     }
 ];
 
@@ -119,57 +128,67 @@ var currentAirdrop = {
 
 // ASYNC - SEND AN AIRDROP -------------------------------------------------------------
 /* 
-    Has a 0.005% chance of dropping an 'airdrop' between 9am & 9pm Brisbane time. 
+    Has a chance to drop a reward based on the number of users with the role online.
+    Equation is curently y = 0.00049x + 0.0013. https://www.desmos.com/calculator/gtb2zddoe6
     At the moment this just contains a random amount of cash, but will eventually include cards and other valuable items.
 */
 (async () => {
 
-    // Check if it's between 9am and 9pm
-    const currentHour = moment().tz('Australia/Brisbane').hour();
-    if (currentHour >= 9 && currentHour < 21) {
+    // Set an interval
+    setInterval(async function () {
 
-        // Set an interval
-        setInterval(async function () {
+        // Find out how many people with the dawson-rp role are online
+        const guild = client.guilds.cache.get(config.bot.guildID);
+        const role = await guild.roles.fetch('962205339728633876');
+        
+        const roleMembers = role.members.toJSON();
+        const onlineRoleMembers = roleMembers.filter(member => {
+            return (member.presence && (member.presence.status !== 'online' || member.presence.status === 'dnd'));
+        });
+        console.log(onlineRoleMembers.length, roleMembers.length)
 
-            // Run a chance check
-            if(chance.weighted([true, false], [0.005, 1]) === false) { return; }
+        // Calculate the weighting
+        // y = 0.00049x + 0.0013
+        const weighting = (0.00049 * onlineRoleMembers.length) + 0.0013;
+        console.log(weighting);
 
-            console.log('SENDING AIRDROP --------------------------------------------------------');
+        // Run a chance check with the calculated weight
+        if(chance.weighted([true, false], [weighting, 1]) === false) { return; }
 
-            // Get the guild & channel
-            const guild = client.guilds.cache.get(config.bot.guildID);
-            const channel = await guild.channels.fetch(config.airdrop.channelID);
+        console.log('SENDING AIRDROP --------------------------------------------------------');
 
-            // Generate a random prize
-            currentAirdrop.prizeMoney = getRandomArbitrary(10, 50);
+        // Get the channel
+        const channel = await guild.channels.fetch(config.airdrop.channelID);
 
-            // Assemble an embed
-            const embed = {
-                title: '💰 An Airdrop has appeared!',
-                description: `The first person to claim this airdrop will receive **ඞ${currentAirdrop.prizeMoney}**!`,
-                footer: { text: `This will disappear in ${Math.round(config.airdrop.expirationMs / 60000)} minutes!` }
-            }
+        // Generate a random prize
+        currentAirdrop.prizeMoney = getRandomArbitrary(30, 70);
 
-            const airdropMessage = await channel.send({ 
-                embeds: [ embed ], 
-                components: [
-                    { type: 1, components: [
-                        { type: 2, label: 'Claim now!', style: 1, custom_id: 'claimAirdrop' }
-                    ]}
-                ]
-            });
+        // Assemble an embed
+        const embed = {
+            title: '💰 An Airdrop has appeared!',
+            description: `The first person to claim this airdrop will receive **ඞ${currentAirdrop.prizeMoney}**!`,
+            footer: { text: `This will disappear in ${Math.round(config.airdrop.expirationMs / 60000)} minutes!` }
+        }
 
-            // Expire the airdrop
-            currentAirdrop.timeout = setTimeout(function () {
-                // Clear the prize money - no cheating!
-                currentAirdrop.prizeMoney = 0;
+        const airdropMessage = await channel.send({ 
+            embeds: [ embed ], 
+            components: [
+                { type: 1, components: [
+                    { type: 2, label: 'Claim now!', style: 1, custom_id: 'claimAirdrop' }
+                ]}
+            ]
+        });
 
-                // Delete the message
-                if (airdropMessage) { airdropMessage.delete(); }
+        // Expire the airdrop
+        currentAirdrop.timeout = setTimeout(function () {
+            // Clear the prize money - no cheating!
+            currentAirdrop.prizeMoney = 0;
 
-            }, config.airdrop.expirationMs);
-        }, config.airdrop.intervalMs);
-    }
+            // Delete the message
+            if (airdropMessage) { airdropMessage.delete(); }
+
+        }, config.airdrop.expirationMs);
+    }, config.airdrop.intervalMs);
 })();
 
 
@@ -214,10 +233,9 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isCommand()) {              // COMMAND INTERACTIONS
         console.log('COMMAND INTERACTION');
+        await interaction.deferReply();
 
         if (interaction.commandName === 'send') {
-
-            await interaction.deferReply();
 
             const recipient = interaction.options.getMember('recipient', false);
             const dollarAmount = interaction.options.getInteger('amount', false);
@@ -229,24 +247,25 @@ client.on('interactionCreate', async interaction => {
             var params = [ userInfo.id ];
             var err, response = await pgClient.query(query, params);
             if (err) { returnError(interaction, botInfo, 'Internal server error'); return; }
-            if (response.rows.length === 0) { returnError(interaction, botInfo, 'Could not find you'); return; }
+            if (response.rows.length === 0) { returnError(interaction, botInfo, 'It looks like you don\'t have an acount'); return; }
             const userAccount = response.rows[0];
 
             if (dollarAmount > userAccount.dollars) { returnError(interaction, botInfo, 'You do not have enough ඞ Dawson Dollars'); return; }
 
-            // Deduct from account
-            var query = `UPDATE accounts SET dollars = $1 WHERE id = $2;`;
-            var params = [ userAccount.dollars - dollarAmount, userInfo.id]
-            var err, response = await pgClient.query(query, params);
-            if (err) { returnError(interaction, botInfo, 'Internal server error'); return; }
 
             // Get the recipient's balance
             var query = `SELECT * FROM accounts WHERE id = $1;`;
             var params = [ recipient.id ];
             var err, response = await pgClient.query(query, params);
             if (err) { returnError(interaction, botInfo, 'Internal server error'); return; }
-            if (response.rows.length === 0) { returnError(interaction, botInfo, 'Could not find the recipient'); return; }
+            if (response.rows.length === 0) { returnError(interaction, botInfo, 'The person you\'re trying to send money to doesn\'t have an account'); return; }
             const recipientAccount = response.rows[0];
+
+            // Deduct from account
+            var query = `UPDATE accounts SET dollars = $1 WHERE id = $2;`;
+            var params = [ userAccount.dollars - dollarAmount, userInfo.id]
+            var err, response = await pgClient.query(query, params);
+            if (err) { returnError(interaction, botInfo, 'Internal server error'); return; }
 
             // Add to recipient's account
             var query = `UPDATE accounts SET dollars = $1 WHERE id = $2;`;
@@ -264,8 +283,6 @@ client.on('interactionCreate', async interaction => {
 
         } else if (interaction.commandName === 'balance') {
 
-            await interaction.deferReply();
-
             // Get the user's account
             var query = `SELECT * FROM accounts WHERE id = $1;`;
             var params = [ userInfo.id ];
@@ -282,8 +299,6 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ embeds: [ embed ] });
 
         } else if (interaction.commandName === 'gamble') { 
-
-            await interaction.deferReply();
             
             const gambleAmount = interaction.options.getInteger('amount', false);
 
@@ -335,8 +350,7 @@ client.on('interactionCreate', async interaction => {
             }
         } else if (interaction.commandName === 'leaderboard') {
 
-            await interaction.deferReply();
-            var query = `SELECT * FROM accounts WHERE dollars != 100 ORDER BY dollars DESC;`;
+            var query = `SELECT * FROM accounts ORDER BY dollars DESC;`;
             var err, response = await pgClient.query(query);
             if (err) { returnError(interaction, botInfo, 'Internal server error'); return; }
 
@@ -357,9 +371,232 @@ client.on('interactionCreate', async interaction => {
             }
 
             await interaction.editReply({ embeds: [ embed ] });
+        } else if (interaction.commandName === 'inventory') {
+
+            // [ TODO ] - retrieve from server
+            const testItems = [
+                { 
+                    name: 'Javelin', rarity: 
+                    { emoji: '🟫', name: 'peasant' }, 
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 17 }, 
+                        { type: 'speed', value: 3 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: true
+                },
+                { 
+                    name: 'Slingshot', 
+                    rarity: { emoji: '🟧', name: 'legendary' }, 
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 35 }, 
+                        { type: 'speed', value: 91 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: false
+                },
+                { 
+                    name: 'Halberd', 
+                    rarity: { emoji: '🟦', name: 'epic' }, 
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 43 }, 
+                        { type: 'speed', value: 18 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: false
+                },
+                { 
+                    name: 'Sharp pencil', 
+                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 16 }, 
+                        { type: 'speed', value: 32 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: false
+                },
+                { 
+                    name: 'Whip', 
+                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 30 }, 
+                        { type: 'speed', value: 72 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: false
+                },
+                { 
+                    name: 'Shortsword', 
+                    rarity: { emoji: '⬛️', name: 'Broken' },
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 34 }, 
+                        { type: 'speed', value: 12 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: false
+                },
+                { 
+                    name: 'Maul', 
+                    rarity: { emoji: '⬜️', name: 'Moderately spoiled' }, 
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 32 }, 
+                        { type: 'speed', value: 13 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: false
+                },
+                { 
+                    name: 'Spear', 
+                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
+                    type: { emoji: '🗡', name: 'Weapon' },
+                    attributes: [ 
+                        { type: 'damage', value: 54 }, 
+                        { type: 'speed', value: 78 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: false
+                },
+                { 
+                    name: 'Potion of Awareness', 
+                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
+                    type: { emoji: '🧪', name: 'Potion' }, 
+                    attributes: [
+                        { type: 'INT', value: 30 },
+                        { type: 'WIS', value: 30 },
+                    ],
+                    isEquipped: false
+                },
+                {
+                    name: 'Cthulu\'s helmet',
+                    rarity: { emoji: '🟦', name: 'epic' }, 
+                    type: { emoji: '🛡', name: 'Armour' }, 
+                    attributes: [
+                        { type: 'position', value: 'helmet' },
+                        { type: 'protection', value: 25 },
+                        { type: 'durability', value: 20 }
+                    ],
+                    isEquipped: true
+                }
+            ]
+
+            // Find equipped armour & weapons
+            const equippedWeapon = testItems.find(item => item.isEquipped === true && item.type.name === 'Weapon');
+            const equippedArmour = testItems.filter(item => item.isEquipped === true && item.type.name === 'Armour');
+
+            console.log(equippedArmour, equippedWeapon);
+
+            let embed = {
+                title: 'Your inventory',
+                color: botInfo.displayColor,
+                fields: [
+                    { name: 'Equipped Weapon: ', value: '', inline: false },
+                    { name: 'Equipped Armour', value: '', inline: false }
+                ]
+            }
+
+            // Get equipped weapon
+            let weaponField = embed.fields.find(field => field.name === 'Equipped Weapon: ');
+            if (equippedWeapon) { 
+                const attributes = equippedWeapon.attributes.reduce(function(acc, cur) { 
+                    return acc + cur.type + ': ' + cur.value + ', ';
+                }, '');
+
+                weaponField.name += equippedWeapon.type.emoji + ' ' + equippedWeapon.name;
+                weaponField.value = equippedWeapon.rarity.emoji + ' ' + equippedWeapon.rarity.name + ' | ' + attributes
+            } else {
+                weaponField.name += 'Nothing';
+                weaponField.value = 'You have no weapons equipped! Find some, then equip them with /equip weapon [weapon id]';
+            }
+
+            // Get equipped armour
+            let armourField = embed.fields.find(field => field.name === 'Equipped Armour');
+            if (equippedArmour.length > 0) { 
+                for (item of equippedArmour) { 
+                    const attributes = item.attributes.reduce(function(acc, cur) { 
+                       return acc + cur.type + ': ' + cur.value + ', ';
+                    }, '');
+
+                    armourField.value += item.rarity.emoji + ' ' + item.name + ' | ' + attributes
+                }
+            }
+
+            // Compose options & get other items
+            let selectOptions = [];
+            for (item of testItems) { 
+                const attributes = item.attributes.reduce(function(acc, cur) {
+                    return acc + cur.type + ': ' + cur.value + ', ';
+                }, '');
+
+                const option = { 
+                    emoji: { name: item.type.emoji },
+                    label: item.name,
+                    value: item.name,
+                    description: item.rarity.emoji + ' ' + item.rarity.name + ' | ' + attributes
+                }
+                selectOptions.push(option);
+
+                if (item.isEquipped) { continue; }
+                const field = { 
+                    name: item.type.emoji + ' ' + item.name,
+                    value: item.rarity.emoji + ' ' + item.rarity.name + ' | ' + attributes,
+                    inline: true
+                }
+                embed.fields.push(field);
+            }
+
+            // Send message
+            await interaction.editReply({ 
+                embeds: [ embed ],
+                components: [
+                    { 
+                        type: 1, 
+                        components: [
+                            {
+                                type: 3,
+                                customId: 'classSelect1',
+                                options: selectOptions,
+                                placeholder: 'Choose an item...'
+                            }
+                        ]
+                    },
+                    {
+                        type: 1,
+                        components: [
+                            { 
+                                type: 2,
+                                style: 1,
+                                label: 'Equip',
+                                customId: 'equipItem',
+                                disabled: true
+                            },
+                            { 
+                                type: 2,
+                                style: 2,
+                                label: 'De-equip',
+                                customId: 'deEquipItem',
+                                disabled: true
+                            },
+                            { 
+                                type: 2,
+                                style: 4,
+                                label: 'Drop',
+                                customId: 'dropItem',
+                                disabled: true
+                            },
+                        ]
+                    }
+                ]
+            });
+
         } else if (interaction.commandName === 'account') {
 
-            await interaction.deferReply();
             const interactionSubCommand = interaction.options.getSubcommand(false);
 
             if (interactionSubCommand === 'create') {
@@ -397,11 +634,13 @@ client.on('interactionCreate', async interaction => {
                 // Create the embed
                 const embed = {
                     title: 'Account created! Welcome to Dawson RP!',
-                    description: 'Your account has been created. You have **ඞ100** (currency), and the stats below. Stats will determine the outcome of particular situations, and will be explained as you do them.',
+                    color: botInfo.displayColor,
+                    description: 'Your account has been created. You have **ඞ100** (currency), **100 HP** and the stats below. Stats will determine the outcome of particular situations, and will be explained as you do them.',
                     fields: [
                         { name: 'Strength', value: 'value: ' + accountStats.abilities.str, inline: true },
                         { name: 'Dexterity', value: 'value: ' + accountStats.abilities.dex, inline: true },
-                        { name: 'Consitution', value: 'value: ' + accountStats.abilities.con, inline: true },
+                        { name: 'Constitution', value: 'value: ' + accountStats.abilities.con, inline: true },
+                        { name: 'Intelligence', value: 'value: ' + accountStats.abilities.int, inline: true },
                         { name: 'Wisdom', value: 'value: ' + accountStats.abilities.wis, inline: true },
                         { name: 'Charisma', value: 'value: ' + accountStats.abilities.cha, inline: true }
                     ],
@@ -412,7 +651,31 @@ client.on('interactionCreate', async interaction => {
 
             } else if (interactionSubCommand === 'view') {
 
+                const player = interaction.options.getMember('player', false) || interaction.member;
 
+                // Retrieve the user's information
+                var query = `SELECT * FROM accounts WHERE id = $1;`;
+                var params = [ player.id ]
+                var err, response = await pgClient.query(query, params);
+                if (err) { returnError(interaction, botInfo, 'Internal server error'); return; }
+                if (response.rows.length === 0) { returnError(interaction, botInfo, 'Could not find that player account. Create one with `/account create`'); return; }
+
+                // Create the embed
+                const embed = {
+                    title: `Statistics for @${player.displayName}`,
+                    color: botInfo.displayColor,
+                    description: `**@${player.displayName}** has **ඞ${response.rows[0].dollars}** & **${response.rows[0].hp} HP**.`,
+                    fields: [
+                        { name: 'Strength', value: 'value: ' + response.rows[0].str, inline: true },
+                        { name: 'Dexterity', value: 'value: ' + response.rows[0].dex, inline: true },
+                        { name: 'Constitution', value: 'value: ' + response.rows[0].con, inline: true },
+                        { name: 'Intelligence', value: 'value: ' + response.rows[0].int, inline: true },
+                        { name: 'Wisdom', value: 'value: ' + response.rows[0].wis, inline: true },
+                        { name: 'Charisma', value: 'value: ' + response.rows[0].cha, inline: true }
+                    ]
+                }
+
+                await interaction.editReply({ embeds: [ embed ] });
             }
         }
 

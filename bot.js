@@ -19,8 +19,13 @@ const chance = new Chance();
 
 
 
-// CONFIG -----------------------------------------------------------------------------
+// FILES ------------------------------------------------------------------------------
 const config = require('./savefiles/config.json');
+const itemRarities = require('./savefiles/rarities.json');
+const itemTypes = require('./savefiles/types.json');
+
+/* Local modules */
+const { router: itemRouter, createItem } = require('./routes/items');
 
 
 
@@ -36,11 +41,33 @@ const pgClient = new PGCLIENT({
 });
 pgClient.connect();
 
+// EXPRESS ----------------------------------------------------------------------------
+const express = require('express');
+const cors = require('cors');
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static('.'));
+const corsOptions = { 
+    origin: '*',
+}
+
+
+// CORS MIDDLEWARE --------------------------------------------------------------------
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+    res.setHeader('Access-Control-Allow-Headers', 'accept, authorization, content-type, x-requested-with');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+
+    next();
+});
+
 
 
 // COMMANDS ---------------------------------------------------------------------------
 const commands = [
-    {
+    {   // Send
         name: 'send',
         description: 'Sends a Dawson Dollar to the user you @. This action is irreversible.',
         options: [
@@ -48,18 +75,22 @@ const commands = [
             { type: 4, name: 'amount', description: 'The amount to send', required: true }
         ]
     },
-    {
+    {   // Gamble
         name: 'gamble',
         description: 'Gamble for more (or less) money. Has an equal chance to return more or less than you gambled.',
         options: [
             { type: 4, name: 'amount', description: 'The amount to gamble', required: true }
         ]
     },
-    {
+    {   // Leaderboard
         name: 'leaderboard',
         description: 'Displays a leaderboard of the top users in the server.',
     },
-    {
+    {   // Inventory
+        name: 'inventory', 
+        description: 'Check the items in your inventory'
+    },
+    {   // Account
         name: 'account',
         description: 'Create or check your account information',
         options: [ 
@@ -78,9 +109,21 @@ const commands = [
             }
         ]
     },
-    {
-        name: 'inventory', 
-        description: 'Check the items in your inventory'
+    {   // Help
+        name: 'help',
+        description: 'Get help on a particular subject',
+        options: [
+            { 
+                name: 'rarity',
+                description: 'Find out what rarities are and how they affect your items',
+                type: 1
+            },
+            { 
+                name: 'type',
+                description: 'Find out what item types there are and how they work',
+                type: 1
+            }
+        ]
     }
 ];
 
@@ -105,6 +148,7 @@ const rest = new REST({ version: '9' }).setToken(config.bot.discordAPIKey);
 
 
 // ASSISTANT FUNCTIONS -----------------------------------------------------------------
+/** Return an error message from the interaction */
 function returnError(interaction, botInfo, message) { 
     const embed = { 
         title: message,
@@ -113,8 +157,14 @@ function returnError(interaction, botInfo, message) {
     interaction.editReply({ embeds: [ embed ] });
 }
 
+/** Get a random number between the min & max */
 function getRandomArbitrary(min, max) {
     return Math.round(Math.random() * (max - min) + min);
+}
+
+/** Capitalise the first letter of a string */
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 
@@ -129,7 +179,7 @@ var currentAirdrop = {
 // ASYNC - SEND AN AIRDROP -------------------------------------------------------------
 /* 
     Has a chance to drop a reward based on the number of users with the role online.
-    Equation is curently y = 0.00049x + 0.0013. https://www.desmos.com/calculator/gtb2zddoe6
+    Equation is curently y = 0.00049x + 0.003. https://www.desmos.com/calculator/gtb2zddoe6
     At the moment this just contains a random amount of cash, but will eventually include cards and other valuable items.
 */
 (async () => {
@@ -143,12 +193,12 @@ var currentAirdrop = {
         
         const roleMembers = role.members.toJSON();
         const onlineRoleMembers = roleMembers.filter(member => {
-            return (member.presence && (member.presence.status !== 'online' || member.presence.status === 'dnd'));
+            return (member.presence && (member.presence.status === 'online' || member.presence.status === 'dnd'));
         });
         console.log(onlineRoleMembers.length, roleMembers.length)
 
         // Calculate the weighting
-        // y = 0.00049x + 0.0013
+        // y = 0.00049x + 0.003
         const weighting = (0.00049 * onlineRoleMembers.length) + 0.0013;
         console.log(weighting);
 
@@ -545,8 +595,8 @@ client.on('interactionCreate', async interaction => {
                 if (item.isEquipped) { continue; }
                 const field = { 
                     name: item.type.emoji + ' ' + item.name,
-                    value: item.rarity.emoji + ' ' + item.rarity.name + ' | ' + attributes,
-                    inline: true
+                    value: item.rarity.emoji + ' ' + item.rarity.name + ' | ' + attributes + '\n',
+                    inline: false
                 }
                 embed.fields.push(field);
             }
@@ -677,6 +727,54 @@ client.on('interactionCreate', async interaction => {
 
                 await interaction.editReply({ embeds: [ embed ] });
             }
+        } else if (interaction.commandName === 'help') { 
+
+            const interactionSubCommand = interaction.options.getSubcommand(false);
+
+            if (interactionSubCommand === 'rarity') {
+
+                const rarityText = itemRarities.reduce(function(acc, cur) { 
+                    return acc + ' ' + cur.emojiName + ' ' + capitalize(cur.name) + '\n';
+                }, '');
+
+                // Create the embed
+                const embed = {
+                    title: '<:aldi:963312717542871081> About item rarities • Help',
+                    color: botInfo.displayColor,
+                    description: 'Every item is assigned a rarity, which can modify how much damage, durability, protection, etc. that item can deal. "Standard" rarity items are default; items lower than that have a reduced stat capacity, and conversely for those with a high rarity rating. The exact stats that rarity will affect on an item depends on the type of item.',
+                    fields: [
+                        {
+                            name: 'Rarity ratings',
+                            value: rarityText
+                        }
+                    ]
+                }
+
+                await interaction.editReply({ embeds: [ embed ] });
+
+            } else if (interactionSubCommand === 'type') { 
+
+                const typeText = itemTypes.reduce(function(acc, cur) { 
+                    return acc + ' ' + cur.emojiName + ' ' + capitalize(cur.name) + '\n';
+                }, '');
+
+                // Create the embed
+                const embed = {
+                    title: '🗡 About item types • Help',
+                    color: botInfo.displayColor,
+                    description: 'Items can be categorised into types, with each type affecting what that item can be used for and the stats it can have.',
+                    fields: [
+                        {
+                            name: 'Item types',
+                            value: typeText
+                        }
+                    ]
+                }
+
+                await interaction.editReply({ embeds: [ embed ] });
+
+            }
+
         }
 
     } else if (interaction.isButton()) {        // BUTTON INTERACTIONS
@@ -715,3 +813,45 @@ client.on('interactionCreate', async interaction => {
 
 // RUN BOT ----------------------------------------------------------------------------
 client.login(config.bot.discordAPIKey);
+
+
+
+// API SERVER -------------------------------------------------------------------------
+
+/** Auth middleware */
+app.use(async function addMiddleware (req, res, next) { 
+
+    // Check for a valid Discord ID
+    const discordID = req.query.discordID || req.body.discordID;
+    if (!discordID) { res.status(401).send('Authentication failed: no discordID parameter supplied.'); return; }
+
+    // Check if this user exists within the guild
+    const guild = client.guilds.cache.get(config.bot.guildID);
+    let thisMember = null;
+    try { thisMember = await guild.members.fetch(discordID); }
+    catch (err) { res.status(401).send('Authentication failed: discordID parameter is invalid.'); return; }
+    if (!thisMember) { res.status(401).send('Authentication failed: discordID parameter does not match any members in the Mingleton guild.'); return; }
+
+    // Attach the pgClient
+    req.pgClient = pgClient;
+
+    next();
+});
+
+/** Test endpoint */
+app.get('/test', cors(corsOptions), async function (req, res) {  
+    res.send('Hello World!');
+});
+
+/** Routes */
+app.use('/items', cors(corsOptions), itemRouter);
+
+/** Run server */
+const port = process.env.PORT || config.apiServer.port;
+app.listen(port, () => console.log('API server running on port', port));
+
+
+// [ TEMP ]
+(async () => { 
+
+})();

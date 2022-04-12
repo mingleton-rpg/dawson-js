@@ -1,4 +1,7 @@
 {
+    "apiServer" : {
+        "port" : 4242
+    },
     "bot" : {
         "discordAPIKey" : "OTYxOTYyNjk3NzAyOTAzODU4.YlAnkw.Uw7z8Lp7-mCBPCGR6ZvKDOngOTs",
         "guildID" : "618748256028983326",

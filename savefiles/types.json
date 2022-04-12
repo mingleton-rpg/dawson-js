@@ -1,0 +1,44 @@
+[
+    {
+        "id" : 0,
+        "name" : "weapon (melee)",
+        "emojiName" : "🗡",
+        "maxStackAmount" : 1,
+        "attributes" : [ ]
+    },
+    {
+        "id" : 1,
+        "name" : "weapon (ranged)",
+        "emojiName" : "🏹",
+        "maxStackAmount" : 1,
+        "attributes" : [ ]
+    },
+    {
+        "id" : 2,
+        "name" : "weapon (throwable)",
+        "emojiName" : "🧱",
+        "maxStackAmount" : 1,
+        "attributes" : [ ]
+    },
+    {
+        "id" : 3,
+        "name" : "armour",
+        "emojiName" : "🛡",
+        "maxStackAmount" : 1,
+        "attributes" : [ ]
+    },
+    {
+        "id" : 4,
+        "name" : "food",
+        "emojiName" : "🍎",
+        "maxStackAmount" : 16,
+        "attributes" : [ ]
+    },
+    {
+        "id" : 5,
+        "name" : "potion",
+        "emojiName" : "🧪",
+        "maxStackAmount" : 16,
+        "attributes" : [ ]
+    }
+]

@@ -23,22 +23,23 @@ const itemTypes = require('../savefiles/types.json');
  * @param {DiscordID} ownerID Discord-generated ID of the user this item belongs to
  * @param {Object} attributes item and type-specific attributes assigned to this item
  */
-async function createItem(pgClient, name, rarityID, typeID, itemIdenfitier, amount, ownerID, attributes) {
+async function createItem(pgClient, name, rarityID, typeID, itemIdentifier, amount, ownerID, attributes) {
 
     // Find an item with that type
-    const type = itemTypes.find(item => item.id == id);
+    const type = itemTypes.find(item => item.id == typeID);
     if (!type) { return [ false, 'Type supplied does not exist' ]; }
 
     // Check if stackAmount is valid
     if (amount > type.maxStackAmount) { return [ false, 'Stack amount exceeds item type parameters' ]; }
 
     // Check for item rarity
-    const rarity = itemRarities.find(item => item.id == id);
+    const rarity = itemRarities.find(item => item.id == rarityID);
     if (!rarity) { return [ false, 'Rarity supplied does not exist' ]; }
 
     // Create the item
-    var query = 'INSERT INTO items (name, rarity_id, type_id, item_identifier, stack_amount, owner_id attributes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;';
-    var params = [ name, rarityID, typeID, itemIdenfitier, amount, ownerID, attributes ];
+    var query = 'INSERT INTO items (name, rarity_id, type_id, item_identifier, stack_amount, owner_id, attributes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;';
+    var params = [ name, rarityID, typeID, itemIdentifier, amount, ownerID, JSON.stringify(attributes) ];
+    console.log(query, params);
     var err, result = await pgClient.query(query, params);
     if (err) { return [ false, 'Error occurred while creating' ]; }
 
@@ -120,7 +121,7 @@ async function transferItem(pgClient, itemID, newOwnerID, amount) {
 
 
 // ENDPOINTS ---------------------------------------------------------------------------
-router.get('/:id', async function(req, res) {                   // Get item by ID
+router.get('/:id', async function (req, res) {                   // Get item by ID
     const pgClient = req.pgClient;
 
     var query = 'SELECT  * FROM items WHERE id = $1;';
@@ -133,7 +134,7 @@ router.get('/:id', async function(req, res) {                   // Get item by I
     const item = {
         name: result.rows[0].name,
         ownerID: result.rows[0].owner_id,
-        itemIdenfitier: result.rows[0].item_identifier,
+        itemIdentifier: result.rows[0].item_identifier,
         rarity: itemRarities.find(item => item.id === result.rows[0].rarity_id),
         type: itemTypes.find(item => item.id === result.rows[0].type_id),
         amount: result.rows[0].amount,
@@ -143,14 +144,14 @@ router.get('/:id', async function(req, res) {                   // Get item by I
     res.status(200).send(JSON.stringify(item));
 });
 
-router.post('/create/', async function(req, res) {              // Create an item
+router.post('/create/', async function (req, res) {              // Create an item
     const pgClient = req.pgClient;
 
     const itemInfo = {
         name: req.body.name,
         rarityID: req.body.rarityID,
         typeID: req.body.typeID,
-        itemIdenfitier: req.body.itemIdenfitier,
+        itemIdentifier: req.body.itemIdentifier,
         amount: req.body.amount,
         ownerID: req.body.ownerID,
         attributes: req.body.attributes,
@@ -160,9 +161,9 @@ router.post('/create/', async function(req, res) {              // Create an ite
         res.status(400).send('Not all required values were provided');
     }
 
-    const [ success, response ] = await createItem(pgClient, itemInfo.name, itemInfo.rarityID, itemInfo.typeID, itemInfo.itemIdenfitier, itemInfo.amount, itemInfo.ownerID, itemInfo.attributes);
+    const [ success, response ] = await createItem(pgClient, itemInfo.name, itemInfo.rarityID, itemInfo.typeID, itemInfo.itemIdentifier, itemInfo.amount, itemInfo.ownerID, itemInfo.attributes);
 
-    if (success === false) { res.status(500).send(response); return; } 
+    if (success === false) { res.status(500).send(response); console.log(response); return; } 
 
     // Return ID
     res.status(200).send(JSON.stringify({ itemID: response }));
@@ -177,12 +178,12 @@ router.post('/transfer/', async function (req, res) {           // Transfer an i
         amount: req.body.amount
     }
 
-    if (Object.values(itemInfo).every(x => x === null || x === '')) { 
+    if (Object.values(transferInfo).every(x => x === null || x === '')) { 
         res.status(400).send('Not all required values were provided');
     }
 
     const [ success, response ] = await transferItem(pgClient, transferInfo.itemID, transferInfo.newOwnerID, transferInfo.amount);
-    if (success === false) { res.status(500).send(response); return; } 
+    if (success === false) { res.status(500).send(response); console.log(response); return; } 
 
     res.status(200).send('Item transferred successfully');
 });

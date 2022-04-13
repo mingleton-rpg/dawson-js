@@ -4,11 +4,9 @@
         "name" : "ruined",
         "emojiName" : "<:ruined:963309950682152980>",
         "attributes" : [
-            { "name" : "damage", "value" : -60 },
-            { "name" : "speed", "value" : -60 },
-            { "name" : "stat", "value" : -60 },
-            { "name" : "cost", "value" : -60},
-            { "name" : "durability", "value" : -60 }
+            { "name" : "probability", "value" : 0.5 },
+            { "name" : "price", "value" : 0.4 },
+            { "name" : "modifier", "value" : 0.4 }
         ]
     },
     {
@@ -16,11 +14,9 @@
         "name" : "peasant",
         "emojiName" : "<:peasant:963312716662075402>",
         "attributes" : [
-            { "name" : "damage", "value" : -50 },
-            { "name" : "speed", "value" : -50 },
-            { "name" : "stat", "value" : -50 },
-            { "name" : "cost", "value" : -50},
-            { "name" : "durability", "value" : -50 }
+            { "name" : "probability", "value" : 0.6 },
+            { "name" : "price", "value" : 0.5 },
+            { "name" : "modifier", "value" : 0.5 }
         ]
     },
     {
@@ -28,11 +24,9 @@
         "name" : "field tested",
         "emojiName" : "<:field_tested:963312716611731486>",
         "attributes" : [
-            { "name" : "damage", "value" : -40 },
-            { "name" : "speed", "value" : -40 },
-            { "name" : "stat", "value" : -40 },
-            { "name" : "cost", "value" : -40},
-            { "name" : "durability", "value" : -40 }
+            { "name" : "probability", "value" : 0.8 },
+            { "name" : "price", "value" : 0.6 },
+            { "name" : "modifier", "value" : 0.6 }
         ]
     },
     {
@@ -40,11 +34,9 @@
         "name" : "moderately spoiled",
         "emojiName" : "<:moderately_spoiled:963312716590759957>",
         "attributes" : [
-            { "name" : "damage", "value" : -20 },
-            { "name" : "speed", "value" : -20 },
-            { "name" : "stat", "value" : -20 },
-            { "name" : "cost", "value" : -20},
-            { "name" : "durability", "value" : -20 }
+            { "name" : "probability", "value" : 1.1 },
+            { "name" : "price", "value" : 0.7 },
+            { "name" : "modifier", "value" : 0.7 }
             
         ]
     },
@@ -53,11 +45,9 @@
         "name" : "aldi",
         "emojiName" : "<:aldi:963312717542871081>",
         "attributes" : [
-            { "name" : "damage", "value" : -10 },
-            { "name" : "speed", "value" : -10 },
-            { "name" : "stat", "value" : -10 },
-            { "name" : "cost", "value" : -10},
-            { "name" : "durability", "value" : -10 }
+            { "name" : "probability", "value" : 1.1 },
+            { "name" : "price", "value" : 0.8 },
+            { "name" : "modifier", "value" : 0.8 }
         ]
     },
     {
@@ -65,11 +55,9 @@
         "name" : "standard",
         "emojiName" : "<:standard:963312716108427305>",
         "attributes" : [
-            { "name" : "damage", "value" : 0 },
-            { "name" : "speed", "value" : 0 },
-            { "name" : "stat", "value" : 0 },
-            { "name" : "cost", "value" : 0 },
-            { "name" : "durability", "value" : 0 }
+            { "name" : "probability", "value" : 1 },
+            { "name" : "price", "value" : 1 },
+            { "name" : "modifier", "value" : 1 }
         ]
     },
     {
@@ -77,11 +65,9 @@
         "name" : "common",
         "emojiName" : "<:common:963312669748760576>",
         "attributes" : [
-            { "name" : "damage", "value" : 10 },
-            { "name" : "speed", "value" : 10 },
-            { "name" : "stat", "value" : 10 },
-            { "name" : "cost", "value" : 10 },
-            { "name" : "durability", "value" : 10 }
+            { "name" : "probability", "value" : 0.9 },
+            { "name" : "price", "value" : 1.5 },
+            { "name" : "modifier", "value" : 1.2 }
         ]
     },
     {
@@ -89,11 +75,9 @@
         "name" : "slightly less common than usual",
         "emojiName" : "<:slighty_less_common_than_usual:963312716578181140>",
         "attributes" : [
-            { "name" : "damage", "value" : 20 },
-            { "name" : "speed", "value" : 20 },
-            { "name" : "stat", "value" : 20 },
-            { "name" : "cost", "value" : 20 },
-            { "name" : "durability", "value" : 20 }
+            { "name" : "probability", "value" : 0.8 },
+            { "name" : "price", "value" : 2 },
+            { "name" : "modifier", "value" : 1.5 }
         ]
     },
     {
@@ -101,11 +85,9 @@
         "name" : "reverse engineered",
         "emojiName" : "<:reverse_engineered:963312716720783370>",
         "attributes" : [
-            { "name" : "damage", "value" : 30 },
-            { "name" : "speed", "value" : 30 },
-            { "name" : "stat", "value" : 30 },
-            { "name" : "cost", "value" : 30 },
-            { "name" : "durability", "value" : 30 }
+            { "name" : "probability", "value" : 0.7 },
+            { "name" : "price", "value" : 3 },
+            { "name" : "modifier", "value" : 1.8 }
         ]
     },
     {
@@ -113,11 +95,9 @@
         "name" : "sharp",
         "emojiName" : "<:sharp:963312716490096640>",
         "attributes" : [
-            { "name" : "damage", "value" : 40 },
-            { "name" : "speed", "value" : 40 },
-            { "name" : "stat", "value" : 40 },
-            { "name" : "cost", "value" : 40 },
-            { "name" : "durability", "value" : 40 }
+            { "name" : "probability", "value" : 0.6 },
+            { "name" : "price", "value" : 4 },
+            { "name" : "modifier", "value" : 2.1 }
         ]
     },
     {
@@ -125,11 +105,9 @@
         "name" : "empowered",
         "emojiName" : "<:empowered:963312716641099786>",
         "attributes" : [
-            { "name" : "damage", "value" : 50 },
-            { "name" : "speed", "value" : 50 },
-            { "name" : "stat", "value" : 50 },
-            { "name" : "cost", "value" : 50 },
-            { "name" : "durability", "value" : 50 }
+            { "name" : "probability", "value" : 0.5 },
+            { "name" : "price", "value" : 5 },
+            { "name" : "modifier", "value" : 2.5 }
         ]
     },
     {
@@ -137,11 +115,9 @@
         "name" : "furry slayer",
         "emojiName" : "<:furry_slayer:963312716636905512>",
         "attributes" : [
-            { "name" : "damage", "value" : 60 },
-            { "name" : "speed", "value" : 60 },
-            { "name" : "stat", "value" : 60 },
-            { "name" : "cost", "value" : 60 },
-            { "name" : "durability", "value" : 60 }
+            { "name" : "probability", "value" : 0.4 },
+            { "name" : "price", "value" : 6 },
+            { "name" : "modifier", "value" : 2.9 }
         ]
     },
     {
@@ -149,11 +125,9 @@
         "name" : "extraordinary",
         "emojiName" : "<:extraordinary:963312716552998942>",
         "attributes" : [
-            { "name" : "damage", "value" : 70 },
-            { "name" : "speed", "value" : 70 },
-            { "name" : "stat", "value" : 70 },
-            { "name" : "cost", "value" : 70 },
-            { "name" : "durability", "value" : 70 }
+            { "name" : "probability", "value" : 0.3 },
+            { "name" : "price", "value" : 8 },
+            { "name" : "modifier", "value" : 3.4 }
         ]
     },
     {
@@ -161,11 +135,9 @@
         "name" : "epic",
         "emojiName" : "<:epic:963312716330717185>",
         "attributes" : [
-            { "name" : "damage", "value" : 80 },
-            { "name" : "speed", "value" : 80 },
-            { "name" : "stat", "value" : 80 },
-            { "name" : "cost", "value" : 80 },
-            { "name" : "durability", "value" : 80 }
+            { "name" : "probability", "value" : 0.2 },
+            { "name" : "price", "value" : 10 },
+            { "name" : "modifier", "value" : 4 }
         ]
     },
     {
@@ -173,11 +145,9 @@
         "name" : "strange",
         "emojiName" : "<:strange:963312716557217812>",
         "attributes" : [
-            { "name" : "damage", "value" : 90 },
-            { "name" : "speed", "value" : 90 },
-            { "name" : "stat", "value" : 90 },
-            { "name" : "cost", "value" : 90 },
-            { "name" : "durability", "value" : 90 }
+            { "name" : "probability", "value" : 0.1 },
+            { "name" : "price", "value" : 12 },
+            { "name" : "modifier", "value" : 4.6 }
         ]
     },
     {
@@ -185,47 +155,49 @@
         "name" : "legen - wait for it - dary",
         "emojiName" : "<:legendary:963312716754350090>",
         "attributes" : [
-            { "name" : "damage", "value" : 100 },
-            { "name" : "speed", "value" : 100 },
-            { "name" : "stat", "value" : 100 },
-            { "name" : "cost", "value" : 100 },
-            { "name" : "durability", "value" : 100 }
+            { "name" : "probability", "value" : 0.08 },
+            { "name" : "price", "value" : 15 },
+            { "name" : "modifier", "value" : 5.2 }
         ]
     },
     {
         "id" : 11,
-        "name" : "gucci",
-        "emojiName" : "<:gucci:963312716607541269>",
+        "name" : "supreme",
+        "emojiName" : "<:supreme:963312716594937856>",
         "attributes" : [
-            { "name" : "damage", "value" : 110 },
-            { "name" : "speed", "value" : 110 },
-            { "name" : "stat", "value" : 110 },
-            { "name" : "cost", "value" : 110 },
-            { "name" : "durability", "value" : 110 }
+            { "name" : "probability", "value" : 0.05 },
+            { "name" : "price", "value" : 20 },
+            { "name" : "modifier", "value" : 7 }
         ]
     },
     {
         "id" : 12,
-        "name" : "mingleton",
-        "emojiName" : "<:mingleton:963312716708196372>",
+        "name" : "gucci",
+        "emojiName" : "<:gucci:963312716607541269>",
         "attributes" : [
-            { "name" : "damage", "value" : 120 },
-            { "name" : "speed", "value" : 120 },
-            { "name" : "stat", "value" : 120 },
-            { "name" : "cost", "value" : 120 },
-            { "name" : "durability", "value" : 120 }
+            { "name" : "probability", "value" : 0.03 },
+            { "name" : "price", "value" : 25 },
+            { "name" : "modifier", "value" : 8 }
         ]
     },
     {
         "id" : 13,
+        "name" : "mingleton",
+        "emojiName" : "<:mingleton:963312716708196372>",
+        "attributes" : [
+            { "name" : "probability", "value" : 0.03 },
+            { "name" : "price", "value" : 30 },
+            { "name" : "modifier", "value" : 10 }
+        ]
+    },
+    {
+        "id" : 14,
         "name" : "dom",
         "emojiName" : "<:dom:963312690611236904>",
         "attributes" : [
-            { "name" : "damage", "value" : 200 },
-            { "name" : "speed", "value" : 200 },
-            { "name" : "stat", "value" : 200 },
-            { "name" : "cost", "value" : 200 },
-            { "name" : "durability", "value" : 200 }
+            { "name" : "probability", "value" : 0.03 },
+            { "name" : "price", "value" : 40 },
+            { "name" : "modifier", "value" : 15 }
         ]
     }
 ]

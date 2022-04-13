@@ -17,7 +17,7 @@
         "id" : 2,
         "name" : "weapon (throwable)",
         "emojiName" : "🧱",
-        "maxStackAmount" : 1,
+        "maxStackAmount" : 16,
         "attributes" : [ ]
     },
     {

@@ -211,7 +211,7 @@ var currentAirdrop = {
         const channel = await guild.channels.fetch(config.airdrop.channelID);
 
         // Generate a random prize
-        currentAirdrop.prizeMoney = getRandomArbitrary(30, 70);
+        currentAirdrop.prizeMoney = getRandomArbitrary(70, 200);
 
         // Assemble an embed
         const embed = {
@@ -821,6 +821,8 @@ client.login(config.bot.discordAPIKey);
 /** Auth middleware */
 app.use(async function addMiddleware (req, res, next) { 
 
+    console.log('requst received: ', req.query, req.body, req.originalUrl)
+
     // Check for a valid Discord ID
     const discordID = req.query.discordID || req.body.discordID;
     if (!discordID) { res.status(401).send('Authentication failed: no discordID parameter supplied.'); return; }
@@ -849,11 +851,3 @@ app.use('/items', cors(corsOptions), itemRouter);
 /** Run server */
 const port = process.env.PORT || config.apiServer.port;
 app.listen(port, () => console.log('API server running on port', port));
-
-
-// [ TEMP ]
-// (async () => { 
-//     setTimeout(() => { 
-//         createItem(pgClient, 'Isaac\'s epic ')
-//     }, 3000);
-// })();

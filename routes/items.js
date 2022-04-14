@@ -99,7 +99,7 @@ async function getInventory(pgClient, userID) {
     if (err || result.rows.length === 0) { return [ false, 'This user does not exist' ]; }
 
     // Get their inventory
-    var query = 'SELECT * FROM items WHERE owner_id = $1;';
+    var query = 'SELECT * FROM items WHERE owner_id = $1 ORDER BY type_id;';
     var params = [ userID ];
     var err, result = await pgClient.query(query, params);
     if (err) { return [ false, 'An error occurred whilst retrieving user items' ]; }
@@ -109,9 +109,7 @@ async function getInventory(pgClient, userID) {
 
     // Create new item objects
     let inventory = [];
-    for (item of Object.values(itemStacks)) { 
-        console.log(item[0].attributes);
-
+    for (item of Object.values(itemStacks)) {
         const itemInfo = {
             id: item[0].id,
             ownerID: item[0].owner_id,
@@ -197,12 +195,6 @@ router.post('/transfer/:itemID/:newOwnerID/', async function (req, res) {       
     if (success === false) { res.status(500).send(response); console.log(response); return; } 
 
     res.status(200).send('Item transferred successfully');
-});
-
-router.post('/:id/equip/:equip/', async function (req, res) {                       // Equip/de-equip item
-
-    console.log('under construction');
-
 });
 
 

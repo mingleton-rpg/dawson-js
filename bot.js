@@ -454,22 +454,25 @@ client.on('interactionCreate', async interaction => {
                 selectOptions.push(option);
             }
 
+            let messageComponents = [];
+            if (selectOptions.length > 0) { 
+                messageComponents.push({ 
+                    type: 1, 
+                    components: [
+                        {
+                            type: 3,
+                            customId: 'classSelect1',
+                            options: selectOptions,
+                            placeholder: 'Choose an item...'
+                        }
+                    ]
+                });
+            }
+
             // Send message
             await interaction.editReply({ 
                 embeds: [ embed ],
-                components: [
-                    { 
-                        type: 1, 
-                        components: [
-                            {
-                                type: 3,
-                                customId: 'classSelect1',
-                                options: selectOptions,
-                                placeholder: 'Choose an item...'
-                            }
-                        ]
-                    }
-                ]
+                components: messageComponents
             });
 
         } else if (interaction.commandName === 'account') {
@@ -622,15 +625,15 @@ client.on('interactionCreate', async interaction => {
 
             await interaction.update({ embeds: [ embed ], components: [] });
 
-        } else if (interaction.customId.includes('un_equip_item')) {
-
-            await interaction.deferReply();
+        } else if (interaction.customId.includes('unequip_armour')) {
 
             // Get item
-            const itemID = interaction.customId.split('_')[3];
+            const itemID = interaction.customId.split('_')[2];
             const inventory = await getInventory(pgClient, userInfo.id);
             const item = inventory.find(x => x.id === itemID);
             if (!item) { return }   // The user interacting was not the owner of this item
+
+            await interaction.deferReply();
 
             if (item.isEquipped === false) { returnError(interaction, botInfo, 'That item isn\'t equipped'); return; }    // The item can't be equipped
 
@@ -642,15 +645,15 @@ client.on('interactionCreate', async interaction => {
 
             returnError(interaction, botInfo, 'Item un-equipped!');
 
-        } else if (interaction.customId.includes('equip_item_')) { 
-
-            await interaction.deferReply();
+        } else if (interaction.customId.includes('equip_armour')) { 
 
             // Get item
             const itemID = interaction.customId.split('_')[2];
             const inventory = await getInventory(pgClient, userInfo.id);
             const item = inventory.find(x => x.id === itemID);
             if (!item) { return }   // The user interacting was not the owner of this item
+
+            await interaction.deferReply();
 
             if (item.isEquipped === true || item.type.isEquippable === false) { returnError(interaction, botInfo, 'That item can\'t be equipped'); return; }    // The item can't be equipped
 
@@ -665,15 +668,11 @@ client.on('interactionCreate', async interaction => {
 
     } else if (interaction.isMessageComponent()) { 
 
-        // console.log(interaction);
-
-        // console.log(interaction.message.interaction);
-
         // Retrieve the inventory item
-        console.log(interaction.values);
-
         const inventory = await getInventory(pgClient, userInfo.id);
         const selectedItem = inventory.find(x => x.id === interaction.values[0]);
+
+        if (!selectedItem) { return; }
 
         console.log(selectedItem);
 
@@ -692,7 +691,8 @@ client.on('interactionCreate', async interaction => {
             ]
         }
 
-        if (selectedItem.amount > 1) { embed.title += ` (${selectedItem.amount})`}
+        if (selectedItem.amount > 1) { embed.title += ` (${selectedItem.amount})`; }
+        if (selectedItem.isEquipped) { embed.title += ` (equipped)`; }
 
         // Compose options & get other items
         let selectOptions = [];
@@ -706,6 +706,29 @@ client.on('interactionCreate', async interaction => {
                 default: (item.id === selectedItem.id)
             }
             selectOptions.push(option);
+        }
+
+        // Compose buttons
+        let buttonList = [{
+            type: 2,
+            style: 4,
+            label: 'Drop',
+            customId: 'drop_item_' + selectedItem.id,
+        }];
+        for (item of selectedItem.type.functions) {
+            let button = {
+                type: 2,
+                style: item.style,
+                label: capitalize(item.label),
+                customId: item.id + selectedItem.id,
+                disabled: false
+            }
+
+            // Make individual decisions
+            if (item.id === 'equip_armour_') { button.disabled = selectedItem.isEquipped; } 
+            else if (item.id === 'unequip_armour_') { button.disabled = !selectedItem.isEquipped; }
+
+            buttonList.push(button);
         }
 
         // Add buttons to the message components
@@ -723,28 +746,7 @@ client.on('interactionCreate', async interaction => {
             },
             {
                 type: 1, 
-                components: [
-                    {
-                        type: 2,
-                        style: 1,
-                        label: 'Equip',
-                        customId: 'equip_item_' + selectedItem.id,
-                        disabled: (selectedItem.isEquipped || !selectedItem.type.isEquippable)
-                    }, 
-                    {
-                        type: 2,
-                        style: 2,
-                        label: 'Un-equip',
-                        customId: 'un_equip_item_' + selectedItem.id,
-                        disabled: (!selectedItem.isEquipped)
-                    }, 
-                    {
-                        type: 2,
-                        style: 4,
-                        label: 'Drop',
-                        customId: 'drop_item_' + selectedItem.id,
-                    },
-                ]
+                components: buttonList
             }
         ]
 

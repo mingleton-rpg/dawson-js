@@ -29,13 +29,13 @@ const chance = new Chance();
     client.query(query, params, function(err, result) { if (err) { console.log(err); }});
     
     // CREATE ACCOUNTS TABLE
-    var query = 'CREATE TABLE IF NOT EXISTS accounts (id BIGINT, dollars INT DEFAULT 100, hp INT DEFAULT 100, dex INT, con INT, int INT, wis INT, cha INT);';
+    var query = 'CREATE TABLE IF NOT EXISTS accounts (id BIGINT, dollars INT DEFAULT 100, hp INT DEFAULT 100);';
     var err, result = await client.query(query);
     if (err) { console.log(err); }
     console.log('Created accounts table');
 
     // CREATE ITEMS TABLE
-    var query = 'CREATE TABLE IF NOT EXISTS items (id UUID DEFAULT gen_random_uuid(), owner_id BIGINT, name VARCHAR, item_identifier VARCHAR, type_id INT, rarity_id INT, stack_amount INT, is_equipped BOOLEAN, is_dropped BOOLEAN, attributes JSONB);';
+    var query = 'CREATE TABLE IF NOT EXISTS items (id UUID DEFAULT gen_random_uuid(), owner_id BIGINT, name VARCHAR, type_id INT, rarity_id INT, is_equipped BOOLEAN DEFAULT false, is_dropped BOOLEAN DEFAULT false, attributes JSONB);';
     var err, result = await client.query(query);
     if (err) { console.log(err); }
     console.log('Created items table');

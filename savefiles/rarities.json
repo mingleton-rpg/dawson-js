@@ -82,7 +82,7 @@
     },
     {
         "id" : 3,
-        "name" : "reverse engineered",
+        "name" : "reverse-engineered",
         "emojiName" : "<:reverse_engineered:963312716720783370>",
         "attributes" : [
             { "name" : "probability", "value" : 0.7 },

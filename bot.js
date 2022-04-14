@@ -10,12 +10,12 @@ const client = new Client({ intents: [
     Intents.FLAGS.GUILD_PRESENCES
 ] });
 
-/** Moment.JS */
-const moment = require('moment-timezone');
-
 /** Chance.JS */
 const Chance = require('chance');
 const chance = new Chance();
+
+/* Node-fetch */
+const fetch = require('node-fetch');
 
 
 
@@ -25,7 +25,9 @@ const itemRarities = require('./savefiles/rarities.json');
 const itemTypes = require('./savefiles/types.json');
 
 /* Local modules */
-const { router: itemRouter, createItem } = require('./routes/items');
+const { router: itemRouter, getInventory } = require('./routes/items');
+const { router: attributesRouter } = require('./routes/attributes');
+const { router: accountsRouter } = require('./routes/accounts');
 
 
 
@@ -423,182 +425,33 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ embeds: [ embed ] });
         } else if (interaction.commandName === 'inventory') {
 
-            // [ TODO ] - retrieve from server
-            const testItems = [
-                { 
-                    name: 'Javelin', rarity: 
-                    { emoji: '🟫', name: 'peasant' }, 
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 17 }, 
-                        { type: 'speed', value: 3 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: true
-                },
-                { 
-                    name: 'Slingshot', 
-                    rarity: { emoji: '🟧', name: 'legendary' }, 
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 35 }, 
-                        { type: 'speed', value: 91 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: false
-                },
-                { 
-                    name: 'Halberd', 
-                    rarity: { emoji: '🟦', name: 'epic' }, 
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 43 }, 
-                        { type: 'speed', value: 18 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: false
-                },
-                { 
-                    name: 'Sharp pencil', 
-                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 16 }, 
-                        { type: 'speed', value: 32 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: false
-                },
-                { 
-                    name: 'Whip', 
-                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 30 }, 
-                        { type: 'speed', value: 72 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: false
-                },
-                { 
-                    name: 'Shortsword', 
-                    rarity: { emoji: '⬛️', name: 'Broken' },
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 34 }, 
-                        { type: 'speed', value: 12 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: false
-                },
-                { 
-                    name: 'Maul', 
-                    rarity: { emoji: '⬜️', name: 'Moderately spoiled' }, 
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 32 }, 
-                        { type: 'speed', value: 13 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: false
-                },
-                { 
-                    name: 'Spear', 
-                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
-                    type: { emoji: '🗡', name: 'Weapon' },
-                    attributes: [ 
-                        { type: 'damage', value: 54 }, 
-                        { type: 'speed', value: 78 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: false
-                },
-                { 
-                    name: 'Potion of Awareness', 
-                    rarity: { emoji: '🟨', name: 'Extraordinary' }, 
-                    type: { emoji: '🧪', name: 'Potion' }, 
-                    attributes: [
-                        { type: 'INT', value: 30 },
-                        { type: 'WIS', value: 30 },
-                    ],
-                    isEquipped: false
-                },
-                {
-                    name: 'Cthulu\'s helmet',
-                    rarity: { emoji: '🟦', name: 'epic' }, 
-                    type: { emoji: '🛡', name: 'Armour' }, 
-                    attributes: [
-                        { type: 'position', value: 'helmet' },
-                        { type: 'protection', value: 25 },
-                        { type: 'durability', value: 20 }
-                    ],
-                    isEquipped: true
-                }
-            ]
-
-            // Find equipped armour & weapons
-            const equippedWeapon = testItems.find(item => item.isEquipped === true && item.type.name === 'Weapon');
-            const equippedArmour = testItems.filter(item => item.isEquipped === true && item.type.name === 'Armour');
-
-            console.log(equippedArmour, equippedWeapon);
+            // Get the inventory
+            const inventory = await getInventory(pgClient, userInfo.id);
 
             let embed = {
                 title: 'Your inventory',
                 color: botInfo.displayColor,
-                fields: [
-                    { name: 'Equipped Weapon: ', value: '', inline: false },
-                    { name: 'Equipped Armour', value: '', inline: false }
-                ]
+                fields: []
             }
 
-            // Get equipped weapon
-            let weaponField = embed.fields.find(field => field.name === 'Equipped Weapon: ');
-            if (equippedWeapon) { 
-                const attributes = equippedWeapon.attributes.reduce(function(acc, cur) { 
-                    return acc + cur.type + ': ' + cur.value + ', ';
-                }, '');
-
-                weaponField.name += equippedWeapon.type.emoji + ' ' + equippedWeapon.name;
-                weaponField.value = equippedWeapon.rarity.emoji + ' ' + equippedWeapon.rarity.name + ' | ' + attributes
-            } else {
-                weaponField.name += 'Nothing';
-                weaponField.value = 'You have no weapons equipped! Find some, then equip them with /equip weapon [weapon id]';
+            let armourField = {
+                name: '🛡 Equipped Armour',
+                value: 'You have no armour equipped!',
+                inline: false
             }
-
-            // Get equipped armour
-            let armourField = embed.fields.find(field => field.name === 'Equipped Armour');
-            if (equippedArmour.length > 0) { 
-                for (item of equippedArmour) { 
-                    const attributes = item.attributes.reduce(function(acc, cur) { 
-                       return acc + cur.type + ': ' + cur.value + ', ';
-                    }, '');
-
-                    armourField.value += item.rarity.emoji + ' ' + item.name + ' | ' + attributes
-                }
-            }
+            embed.fields.push(armourField);
 
             // Compose options & get other items
             let selectOptions = [];
-            for (item of testItems) { 
-                const attributes = item.attributes.reduce(function(acc, cur) {
-                    return acc + cur.type + ': ' + cur.value + ', ';
-                }, '');
+            for (item of inventory) {
 
                 const option = { 
-                    emoji: { name: item.type.emoji },
+                    emoji: { name: item.type.emojiName },
                     label: item.name,
-                    value: item.name,
-                    description: item.rarity.emoji + ' ' + item.rarity.name + ' | ' + attributes
+                    value: item.id,
+                    description: capitalize(item.rarity.name) + ' ' + item.type.name
                 }
                 selectOptions.push(option);
-
-                if (item.isEquipped) { continue; }
-                const field = { 
-                    name: item.type.emoji + ' ' + item.name,
-                    value: item.rarity.emoji + ' ' + item.rarity.name + ' | ' + attributes + '\n',
-                    inline: false
-                }
-                embed.fields.push(field);
             }
 
             // Send message
@@ -614,32 +467,6 @@ client.on('interactionCreate', async interaction => {
                                 options: selectOptions,
                                 placeholder: 'Choose an item...'
                             }
-                        ]
-                    },
-                    {
-                        type: 1,
-                        components: [
-                            { 
-                                type: 2,
-                                style: 1,
-                                label: 'Equip',
-                                customId: 'equipItem',
-                                disabled: true
-                            },
-                            { 
-                                type: 2,
-                                style: 2,
-                                label: 'De-equip',
-                                customId: 'deEquipItem',
-                                disabled: true
-                            },
-                            { 
-                                type: 2,
-                                style: 4,
-                                label: 'Drop',
-                                customId: 'dropItem',
-                                disabled: true
-                            },
                         ]
                     }
                 ]
@@ -714,15 +541,7 @@ client.on('interactionCreate', async interaction => {
                 const embed = {
                     title: `Statistics for @${player.displayName}`,
                     color: botInfo.displayColor,
-                    description: `**@${player.displayName}** has **ඞ${response.rows[0].dollars}** & **${response.rows[0].hp} HP**.`,
-                    fields: [
-                        { name: 'Strength', value: 'value: ' + response.rows[0].str, inline: true },
-                        { name: 'Dexterity', value: 'value: ' + response.rows[0].dex, inline: true },
-                        { name: 'Constitution', value: 'value: ' + response.rows[0].con, inline: true },
-                        { name: 'Intelligence', value: 'value: ' + response.rows[0].int, inline: true },
-                        { name: 'Wisdom', value: 'value: ' + response.rows[0].wis, inline: true },
-                        { name: 'Charisma', value: 'value: ' + response.rows[0].cha, inline: true }
-                    ]
+                    description: `**@${player.displayName}** has **ඞ${response.rows[0].dollars}** & **${response.rows[0].hp} HP**.`
                 }
 
                 await interaction.editReply({ embeds: [ embed ] });
@@ -802,7 +621,138 @@ client.on('interactionCreate', async interaction => {
             }
 
             await interaction.update({ embeds: [ embed ], components: [] });
+
+        } else if (interaction.customId.includes('un_equip_item')) {
+
+            await interaction.deferReply();
+
+            // Get item
+            const itemID = interaction.customId.split('_')[3];
+            const inventory = await getInventory(pgClient, userInfo.id);
+            const item = inventory.find(x => x.id === itemID);
+            if (!item) { return }   // The user interacting was not the owner of this item
+
+            if (item.isEquipped === false) { returnError(interaction, botInfo, 'That item isn\'t equipped'); return; }    // The item can't be equipped
+
+            // Equip this item
+            var query = 'UPDATE items SET is_equipped = $1 WHERE id = $2;';
+            var params = [ false, item.id ];
+            var err, result = await pgClient.query(query, params);
+            if (err) { console.log(err); return; }
+
+            returnError(interaction, botInfo, 'Item un-equipped!');
+
+        } else if (interaction.customId.includes('equip_item_')) { 
+
+            await interaction.deferReply();
+
+            // Get item
+            const itemID = interaction.customId.split('_')[2];
+            const inventory = await getInventory(pgClient, userInfo.id);
+            const item = inventory.find(x => x.id === itemID);
+            if (!item) { return }   // The user interacting was not the owner of this item
+
+            if (item.isEquipped === true || item.type.isEquippable === false) { returnError(interaction, botInfo, 'That item can\'t be equipped'); return; }    // The item can't be equipped
+
+            // Equip this item
+            var query = 'UPDATE items SET is_equipped = $1 WHERE id = $2;';
+            var params = [ true, item.id ];
+            var err, result = await pgClient.query(query, params);
+            if (err) { console.log(err); return; }
+
+            returnError(interaction, botInfo, 'Item equipped!');
         }
+
+    } else if (interaction.isMessageComponent()) { 
+
+        // console.log(interaction);
+
+        // console.log(interaction.message.interaction);
+
+        // Retrieve the inventory item
+        console.log(interaction.values);
+
+        const inventory = await getInventory(pgClient, userInfo.id);
+        const selectedItem = inventory.find(x => x.id === interaction.values[0]);
+
+        console.log(selectedItem);
+
+        // Generate item embed
+        let attributesText = '';
+        for (value of selectedItem.attributes) { 
+            attributesText += `**${capitalize(value.name)}:** ${value.value} \n`
+        }
+
+        let embed = {
+            title: `${selectedItem.type.emojiName} *${selectedItem.name}*`,
+            color: botInfo.displayColor,
+            description: `${selectedItem.rarity.emojiName} ${capitalize(selectedItem.rarity.name)} ${selectedItem.type.name}.`,
+            fields: [
+                { name: 'Item stats', value: attributesText || 'This item has no stats' }
+            ]
+        }
+
+        if (selectedItem.amount > 1) { embed.title += ` (${selectedItem.amount})`}
+
+        // Compose options & get other items
+        let selectOptions = [];
+        for (item of inventory) {
+
+            const option = { 
+                emoji: { name: item.type.emojiName },
+                label: item.name,
+                value: item.id,
+                description: capitalize(item.rarity.name) + ' ' + item.type.name,
+                default: (item.id === selectedItem.id)
+            }
+            selectOptions.push(option);
+        }
+
+        // Add buttons to the message components
+        let components = [
+            { 
+                type: 1, 
+                components: [
+                    {
+                        type: 3,
+                        customId: 'classSelect1',
+                        options: selectOptions,
+                        placeholder: 'Choose an item...'
+                    }
+                ]
+            },
+            {
+                type: 1, 
+                components: [
+                    {
+                        type: 2,
+                        style: 1,
+                        label: 'Equip',
+                        customId: 'equip_item_' + selectedItem.id,
+                        disabled: (selectedItem.isEquipped || !selectedItem.type.isEquippable)
+                    }, 
+                    {
+                        type: 2,
+                        style: 2,
+                        label: 'Un-equip',
+                        customId: 'un_equip_item_' + selectedItem.id,
+                        disabled: (!selectedItem.isEquipped)
+                    }, 
+                    {
+                        type: 2,
+                        style: 4,
+                        label: 'Drop',
+                        customId: 'drop_item_' + selectedItem.id,
+                    },
+                ]
+            }
+        ]
+
+
+        await interaction.update({
+            embeds: [ embed ],
+            components: components
+        });
 
     } else {                                    // OTHER
         console.log('Interaction of type ' + interaction.type + ' unaccounted for.');
@@ -821,7 +771,7 @@ client.login(config.bot.discordAPIKey);
 /** Auth middleware */
 app.use(async function addMiddleware (req, res, next) { 
 
-    console.log('requst received: ', req.query, req.body, req.originalUrl)
+    console.log('request received: ', req.query, req.body, req.originalUrl)
 
     // Check for a valid Discord ID
     const discordID = req.query.discordID || req.body.discordID;
@@ -847,7 +797,36 @@ app.get('/test', cors(corsOptions), async function (req, res) {
 
 /** Routes */
 app.use('/items', cors(corsOptions), itemRouter);
+app.use('/attributes', cors(corsOptions), attributesRouter);
+app.use('/accounts', cors(corsOptions), accountsRouter);
 
 /** Run server */
 const port = process.env.PORT || config.apiServer.port;
 app.listen(port, () => console.log('API server running on port', port));
+
+
+(async () => {
+
+    // setTimeout(() => {
+
+    //     // Test endpoints
+    //     const domain = 'http://localhost:4242';
+    //     const attributes = [ 
+    //         { name: 'hp', value: 15 }
+    //     ];
+    //     fetch(domain + `/items/create/?discordID=285171615690653706`, {
+    //         method: 'POST',
+    //         headers : { 'Content-Type': 'application/json' },
+    //         body: JSON.stringify({
+    //             name: `Pear`,
+    //             rarityID: 0,
+    //             typeID: 4,
+    //             amount: 3,
+    //             ownerID: '285171615690653706',
+    //             attributes: attributes
+    //         })
+    //     })
+    //     .then(res => console.log(res.status, res.statusText))
+    //     .catch(err => console.log(err))
+    // }, 3000)
+})();

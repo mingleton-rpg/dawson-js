@@ -213,7 +213,7 @@ var currentAirdrop = {
         const channel = await guild.channels.fetch(config.airdrop.channelID);
 
         // Generate a random prize
-        currentAirdrop.prizeMoney = getRandomArbitrary(70, 200);
+        currentAirdrop.prizeMoney = getRandomArbitrary(50, 100);
 
         // Assemble an embed
         const embed = {

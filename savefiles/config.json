@@ -13,10 +13,10 @@
         "expirationMs" : 3600000
     },
     "postgres" : {
-        "user" : "wqdpdoiemmwwuu",
-        "host" : "ec2-52-73-155-171.compute-1.amazonaws.com",
-        "database" : "d3rkj668s33s02",
-        "password" : "3ccef31ebc9bfaf0e6dadd2371bf6e147b7068b36fad77a7276ac55d49bb04ff",
+        "user" : "mjmmtzxkqlzwfr",
+        "host" : "ec2-3-211-6-217.compute-1.amazonaws.com",
+        "database" : "d4t7e5ekl98euh",
+        "password" : "892f45e82d4769f952a915ccf9d1e00adce836ee095270afd7ac9cdc5ba74e45",
         "port" : 5432
     }
 }

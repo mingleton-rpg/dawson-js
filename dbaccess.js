@@ -42,7 +42,7 @@ const chance = new Chance();
 }) ();
 
 
-// var query = 'DELETE FROM accounts WHERE id = 897735163553918987;';
+// var query = 'DELETE FROM accounts WHERE id = XXXXXXXXXXXX;';
 // var params = [];
 // client.query(query, params, function(err, result) { if (err) { console.log(err); }});
 
